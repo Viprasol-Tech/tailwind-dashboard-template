@@ -77,3 +77,51 @@ export function formatPercent(
   const sign = signed && value > 0 ? "+" : "";
   return `${sign}${fixed}%`;
 }
+
+/**
+ * Compactly format large numbers using K/M/B suffixes.
+ *
+ * @example formatCompact(1500) // "1.5K"
+ * @example formatCompact(2_300_000) // "2.3M"
+ */
+export function formatCompact(value: number, locale = "en-US"): string {
+  if (!Number.isFinite(value)) {
+    return "—";
+  }
+  return new Intl.NumberFormat(locale, {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+/**
+ * Format a timestamp as a coarse, human-friendly relative time.
+ *
+ * Resolves to "just now", "Nm ago", "Nh ago", "Nd ago", or a localized date
+ * for anything older than a week. Future timestamps are clamped to "just now"
+ * so clock skew never produces "-3m ago".
+ *
+ * @param iso ISO 8601 timestamp string.
+ * @param now Reference point (defaults to `Date.now()`); injectable for tests.
+ */
+export function formatRelativeTime(iso: string, now: number = Date.now()): string {
+  const then = Date.parse(iso);
+  if (Number.isNaN(then)) {
+    return "—";
+  }
+  const diffMs = now - then;
+  const diffSec = Math.floor(diffMs / 1000);
+
+  if (diffSec < 45) return "just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+
+  return new Date(then).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}

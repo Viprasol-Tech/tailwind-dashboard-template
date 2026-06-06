@@ -1,6 +1,6 @@
 {
   "name": "tailwind-dashboard-template",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Tailwind admin dashboard template (Next.js) — sidebar, stat cards, table.",
   "private": true,
   "license": "MIT",

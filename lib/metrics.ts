@@ -79,3 +79,56 @@ export function summarizeSeries(label: string, series: readonly number[]): StatS
   const { total, percentChange } = computeStats(series);
   return { label, value: total, percentChange };
 }
+
+/**
+ * Median (50th percentile) of a series.
+ *
+ * For an even number of points the mean of the two central values is used.
+ * Non-finite values are ignored; an empty series returns 0.
+ *
+ * @example median([3, 1, 2]) // 2
+ * @example median([1, 2, 3, 4]) // 2.5
+ */
+export function median(series: readonly number[]): number {
+  const sorted = (series ?? []).filter((n) => Number.isFinite(n)).sort((a, b) => a - b);
+  const n = sorted.length;
+  if (n === 0) return 0;
+  const mid = Math.floor(n / 2);
+  return n % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
+}
+
+/**
+ * Population standard deviation of a series.
+ *
+ * Measures spread around the mean. Non-finite values are ignored; a series
+ * with fewer than two valid points returns 0.
+ */
+export function standardDeviation(series: readonly number[]): number {
+  const clean = (series ?? []).filter((n) => Number.isFinite(n));
+  if (clean.length < 2) return 0;
+  const mean = clean.reduce((sum, n) => sum + n, 0) / clean.length;
+  const variance =
+    clean.reduce((sum, n) => sum + (n - mean) ** 2, 0) / clean.length;
+  return Math.sqrt(variance);
+}
+
+/** Direction of a series over its window. */
+export type Trend = "up" | "down" | "flat";
+
+/**
+ * Classify the overall direction of a series.
+ *
+ * Compares the first and last valid points. Differences within `epsilon`
+ * (as a fraction of the starting magnitude) are treated as flat, so tiny
+ * fluctuations don't flicker the UI between up and down.
+ */
+export function trend(series: readonly number[], epsilon = 0.001): Trend {
+  const clean = (series ?? []).filter((n) => Number.isFinite(n));
+  if (clean.length < 2) return "flat";
+  const first = clean[0]!;
+  const last = clean[clean.length - 1]!;
+  const threshold = Math.abs(first) * epsilon;
+  if (last - first > threshold) return "up";
+  if (first - last > threshold) return "down";
+  return "flat";
+}

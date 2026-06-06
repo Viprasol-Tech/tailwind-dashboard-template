@@ -1,6 +1,8 @@
-import Sidebar from "@/components/Sidebar";
+import DashboardShell from "@/components/DashboardShell";
 import StatCard from "@/components/StatCard";
-import DataTable from "@/components/DataTable";
+import BarChart from "@/components/BarChart";
+import ActivityFeed from "@/components/ActivityFeed";
+import FilterableOrders from "@/components/FilterableOrders";
 import { computeStats } from "@/lib/metrics";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import {
@@ -8,6 +10,7 @@ import {
   ordersSeries,
   customersSeries,
   recentOrders,
+  recentActivity,
 } from "@/lib/data";
 
 export default function DashboardPage() {
@@ -16,42 +19,60 @@ export default function DashboardPage() {
   const customers = computeStats(customersSeries);
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 px-8 py-8">
-        <header className="mb-8">
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Overview of revenue, orders, and customers for the last 7 periods.
-          </p>
-        </header>
+    <DashboardShell title="Dashboard">
+      <p className="mb-8 text-sm text-slate-500 dark:text-slate-400">
+        Overview of revenue, orders, and customers for the last 7 periods.
+      </p>
 
+      <section
+        aria-label="Key metrics"
+        className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        <StatCard
+          label="Revenue"
+          value={formatCurrency(revenue.total)}
+          delta={revenue.percentChange}
+          series={revenueSeries}
+        />
+        <StatCard
+          label="Orders"
+          value={formatNumber(orders.total)}
+          delta={orders.percentChange}
+          series={ordersSeries}
+        />
+        <StatCard
+          label="New Customers"
+          value={formatNumber(customers.total)}
+          delta={customers.percentChange}
+          series={customersSeries}
+        />
+      </section>
+
+      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <section
-          aria-label="Key metrics"
-          className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          aria-label="Revenue by period"
+          className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900"
         >
-          <StatCard
-            label="Revenue"
-            value={formatCurrency(revenue.total)}
-            delta={revenue.percentChange}
-          />
-          <StatCard
-            label="Orders"
-            value={formatNumber(orders.total)}
-            delta={orders.percentChange}
-          />
-          <StatCard
-            label="New Customers"
-            value={formatNumber(customers.total)}
-            delta={customers.percentChange}
-          />
+          <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Revenue by period
+          </h2>
+          <BarChart data={revenueSeries} label="Revenue by period" />
         </section>
 
-        <section aria-label="Recent orders">
-          <h2 className="mb-3 text-lg font-semibold text-slate-900">Recent orders</h2>
-          <DataTable orders={recentOrders} />
+        <section aria-label="Activity">
+          <h2 className="mb-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Activity
+          </h2>
+          <ActivityFeed events={recentActivity} />
         </section>
-      </main>
-    </div>
+      </div>
+
+      <section aria-label="Recent orders">
+        <h2 className="mb-3 text-lg font-semibold text-slate-900 dark:text-slate-100">
+          Recent orders
+        </h2>
+        <FilterableOrders orders={recentOrders} />
+      </section>
+    </DashboardShell>
   );
 }
